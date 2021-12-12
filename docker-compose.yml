@@ -1,0 +1,33 @@
+
+version: '3'
+
+services:
+  backend:
+    build:
+      context: ./blog_backend
+      args:
+        DJANGO_ALLOWED_HOSTS: https://ec2-3-144-234-195.us-east-2.compute.amazonaws.com, api
+        DJANGO_SECRET_KEY: '9+tf$$^mh=ccdqiy8u+5c53gyx=#h=0l@$$4gf+2ebwq43f^ek37'
+        DJANGO_CORS_ORIGIN_WHITELIST: https://ec2-3-144-234-195.us-east-2.compute.amazonaws.com
+    command: gunicorn blog_backend.wsgi --bind 0.0.0.0:8000
+    ports:
+      - "8000:8000"
+  frontend:
+    build:
+      context: ./blog_frontend
+      args:
+        API_URL: https://ec2-3-144-234-195.us-east-2.compute.amazonaws.com
+    volumes:
+      - build_folder:/frontend/build
+  nginx:
+    image: nginx
+    ports:
+      - 80:8080
+    volumes:
+      - ./webserver/nginx-proxy.conf:/etc/nginx/conf.d/default.conf:ro
+      - build_folder:/var/www/frontend
+    depends_on:
+      - backend
+      - frontend
+volumes:
+  build_folder:
